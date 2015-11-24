@@ -1,0 +1,203 @@
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli
+END
+20120704_1913_PoseVicon.txt
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/20120704_1913_PoseVicon.txt
+END
+5DoFvs2DoF_RANSAC_Linear.jpg
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/playground/!svn/ver/796/cristian/OpticalFlow/ViconIMU/Juli/5DoFvs2DoF_RANSAC_Linear.jpg
+END
+5DoFvs2DoF_RANSAC_Homography.jpg
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/playground/!svn/ver/796/cristian/OpticalFlow/ViconIMU/Juli/5DoFvs2DoF_RANSAC_Homography.jpg
+END
+euler2quat.m
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/euler2quat.m
+END
+20120704_1857_PoseVicon.txt
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/20120704_1857_PoseVicon.txt
+END
+20120704_1857_Flow.txt
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/20120704_1857_Flow.txt
+END
+EstimateInliers.m
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/EstimateInliers.m
+END
+RANSAC_Linear.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/RANSAC_Linear.m
+END
+ReadPoseVicon.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/ReadPoseVicon.m
+END
+ReadFlowArrayFile.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/ReadFlowArrayFile.m
+END
+20120704_1913_PoseVicon.txt.mat
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/playground/!svn/ver/796/cristian/OpticalFlow/ViconIMU/Juli/20120704_1913_PoseVicon.txt.mat
+END
+RANSAC_Homography.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/RANSAC_Homography.m
+END
+Optical_Flow_Motion.m~
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/playground/!svn/ver/796/cristian/OpticalFlow/ViconIMU/Juli/Optical_Flow_Motion.m~
+END
+missing.m
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/missing.m
+END
+Optical_Flow_justOF.m
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/Optical_Flow_justOF.m
+END
+20120704_1911_Flow.txt
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/20120704_1911_Flow.txt
+END
+20120704_1905_PoseVicon.txt
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/20120704_1905_PoseVicon.txt
+END
+20120704_1913_Flow.txt
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/20120704_1913_Flow.txt
+END
+quaternionexperiment.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/quaternionexperiment.m
+END
+20120704_1905_Flow.txt
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/20120704_1905_Flow.txt
+END
+invquat.m
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/invquat.m
+END
+20120704_1915_Flow.txt
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/20120704_1915_Flow.txt
+END
+testeuler2quat.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/testeuler2quat.m
+END
+Optical_Flow_YiMa.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/Optical_Flow_YiMa.m
+END
+20120704_1913_Flow.txt.mat
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/playground/!svn/ver/796/cristian/OpticalFlow/ViconIMU/Juli/20120704_1913_Flow.txt.mat
+END
+Optical_Flow_Motion.m
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/Optical_Flow_Motion.m
+END
+20120704_1915_Flow.txt.mat
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/20120704_1915_Flow.txt.mat
+END
+quatmult.m
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/quatmult.m
+END
+Optical_Flow_Epipolar.m
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/playground/!svn/ver/796/cristian/OpticalFlow/ViconIMU/Juli/Optical_Flow_Epipolar.m
+END
+CheckColinearity.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/CheckColinearity.m
+END
+20120704_1910_PoseVicon.txt
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/20120704_1910_PoseVicon.txt
+END
+20120704_1911_PoseVicon.txt
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/20120704_1911_PoseVicon.txt
+END
+20120704_1910_Flow.txt
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/Juli/20120704_1910_Flow.txt
+END

@@ -1,0 +1,101 @@
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March
+END
+data1.mat
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/data1.mat
+END
+Holodeck_Particle_filter2D_IMUOdometer.m
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/Holodeck_Particle_filter2D_IMUOdometer.m
+END
+log2Dof_20120315175134.txt
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/log2Dof_20120315175134.txt
+END
+data3.mat
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/data3.mat
+END
+log2Dof_20120315175406.txt
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/log2Dof_20120315175406.txt
+END
+U_IMU_Z_OF_nocorrection_Neff.fig
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/U_IMU_Z_OF_nocorrection_Neff.fig
+END
+U_IMU_Z_OF_nocorrection.fig
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/U_IMU_Z_OF_nocorrection.fig
+END
+Preanalysis.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/Preanalysis.m
+END
+log2Dof_20120315175656.txt
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/log2Dof_20120315175656.txt
+END
+U_IMU_Z_OF_scale_correction_Neff.fig
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/U_IMU_Z_OF_scale_correction_Neff.fig
+END
+U_IMU_Z_OF_pixel_scale correction_Neff.fig
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/U_IMU_Z_OF_pixel_scale%20correction_Neff.fig
+END
+U_IMU_Z_OF_scale correction.fig
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/U_IMU_Z_OF_scale%20correction.fig
+END
+U_IMU_Z_OF_pixel_scale correction.fig
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/U_IMU_Z_OF_pixel_scale%20correction.fig
+END
+PoseVicon220120315_1751.txt
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/PoseVicon220120315_1751.txt
+END
+PoseVicon220120315_1754.txt
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/PoseVicon220120315_1754.txt
+END
+PoseVicon220120315_1756.txt
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/playground/!svn/ver/793/cristian/OpticalFlow/ViconIMU/March/PoseVicon220120315_1756.txt
+END

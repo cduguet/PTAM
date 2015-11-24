@@ -1,0 +1,488 @@
+classdef Indirect_ExtendedKalmanFilter
+    properties
+        
+        
+        
+        %State
+        X;
+        
+        %Expected state (prior in propagation step)
+        X_exp;
+                
+        %=====================NOISE AND STANDARD DEVIATIONS================
+        
+        %Acceleration noise Variance
+        var_na;
+        %Acceleration bias noise variance
+        var_nba;
+        %angular velocity variance
+        var_nomega;
+        %angular velocity bias variance
+        var_nbomega;
+        %Scale noise variance
+        var_nL;
+        
+        % Optical Flow covariance matrix
+        R;
+        
+        %State covariance MAtrix
+        P_k_k;
+        
+        %Measurement Matrix
+        H;
+        %----------
+        
+        %other noises
+        var_nqvw = [0 0 0];
+        var_nqci = [0 0 0];
+        var_npic = [0 0 0];
+        
+        
+         %-------------------------- state parameters-----------------------
+        
+        % Scale of  the Optical Flow
+        L =1;
+        
+        % position of camera w.r.t. to imu frame
+        p_i_c;
+        % rotation of camera w.r.t. to imu frame
+        q_i_c;
+        
+        %Extra state from last update
+        q_w_i_lastOF ;
+        %Output for measurement
+        z_OF = [0 0 0]';
+        
+        
+         %------------------------fIR low pass filter-----------------------
+        
+        FIR_buffsize =5;
+        FIR_coeff = [.2 .2 .2 .2 .2];        
+        FIR_buff;
+                
+        
+        %---------------------- counters and flags-------------------------
+        % Propagated flag
+        propagated = 0;
+        
+        
+        %tolerance to optical flow
+        noflow_counter =0;
+        
+        %----------------------- Optical Flow Parameters--------------------
+        
+        % Size of the pixel
+        pixel_size = 3.75e-6;
+        
+        % Focal length
+        f = 6e-3;
+        
+        %Image size
+        Image_height;
+        Image_width;
+        
+        
+        %---------------------------- Ransac Parameters--------------------
+        
+        max_Iter = 100;
+        sample_num = 50;
+        RANSAC_Linear_treshold = 1;
+        
+        %---------------------------Debug variables------------------------
+        z_SOF; 
+        
+        strapdowntime=0;
+        OFTime;
+        kalmanerrorpropagationtime;
+        kalmanerrorcorrectiontime;
+        %------------------------------------------------------------------
+        
+    end
+    %    properties (Dependent)
+    %       Modulus
+    %    end
+    
+    methods
+        %% PROPAGATE
+        
+        function EKF = Propagate(EKF, gyro, acc, delta_t)
+            tic
+            %% ================= IMU Strapdown Algorithm ==========================
+            % The initial velocity and position information is in X( i-1,:)
+            % INPUT THE LAST TWO MEASUREMENTS, SINCE IT IS INTEGRATING IN
+            % 1ST ORDER
+            if EKF.propagated ==0
+                EKF.X_exp = IMU_SingleStrapdown(EKF.X,gyro,acc,delta_t);
+            else
+                EKF.X_exp = IMU_SingleStrapdown(EKF.X_exp,gyro,acc,delta_t);
+            end
+            
+            timeaux= tac;
+            EKF.strapdowntime = EKF.strapdowntime+timeaux;
+            
+            tic
+            % --------------------- Expected State Values -----------------------------
+            p_w_i_hat       = EKF.X_exp(1:3);
+            v_w_i_hat       = EKF.X_exp(4:6);
+            q_w_i_hat       = EKF.X_exp(7:10);  % Expectation fof the quaternion from world to IMU
+            % q_w_i_hat = quatmult(ODO_IMUrot,X(7:10));
+            % q_w_i_hat = quat_normalize(q_w_i_hat);
+            b_omega_hat     = EKF.X_exp(11:13); % Expectation of the bias of the IMU gyro measurements
+            b_a_hat         = EKF.X_exp(14:16); % Expectation of the bias of the IMU accelerometer measurements
+            L_hat           = EKF.X_exp(17);
+            p_i_c_hat       = EKF.X_exp(18:20);
+            q_i_c_hat       = EKF.X_exp(21:24);
+            % FIXME: b_a_hat, b_omega_hat, p_i_c_hat and q_i_c_hat are not being changed in the
+            % expectancy, with respect to the state K
+            
+            %% Correlation Matrix  Propagation
+            % --------------------Construct variables from expected values ----------
+            
+            % Cross product matrices from the unbiased measurements
+            Cross_a_x = VectorToCrossMat(acc(2,:) - b_a_hat);
+            Cross_omega_x = VectorToCrossMat(gyro(2,:) - b_omega_hat);
+            Cross_omega_x2 = Cross_omega_x*Cross_omega_x;
+            
+            %Make rotation matrix from the quaternion
+            C_q_w_i_hat = QuatToRotMat(q_w_i_hat);
+            %            C_q_i_c_hat = QuatToRotMat(q_i_c_hat);
+            
+            % Make cross product matrices from v_w_i_hat and p_i_c_hat
+            %            Cross_v_w_i_hat = VectorToCrossMat(v_w_i_hat);
+            %            Cross_p_i_c_hat = VectorToCrossMat(p_i_c_hat);
+            
+            % ---------------------------State Covariance Matrix-----------------------
+            
+            F_d  = ConstructFd(C_q_w_i_hat,Cross_a_x,Cross_omega_x,Cross_omega_x2,delta_t);
+            
+            % -------------------------- Noise Covariance Matrix-----------------------
+            
+            %%------------------- Qd Calculation: Analytical ----------------------
+            
+            Q_d = ConstructQd(delta_t,C_q_w_i_hat, Cross_a_x,Cross_omega_x,Cross_omega_x2, EKF.var_na, EKF.var_nba, EKF.var_nomega, EKF.var_nbomega, EKF.var_nL);
+            
+            %%-----------------------Stephan Weiss approach -----------------------
+%             Qd_weiss = calc_Q(delta_t,q_w_i_hat,gyro(2,:)' - b_omega_hat',gyro(2,:)' - b_a_hat',...
+%                 EKF.var_na,EKF.var_nba,...
+%                 EKF.var_nomega,EKF.var_nbomega,...
+%                 EKF.var_nL,...
+%                 EKF.var_nqvw,...
+%                 EKF.var_nqci,...
+%                 EKF.var_npic);
+%             
+%             Q_d = Qd_weiss(1:22,1:22);
+            %%-------------------------------------------------------------------------
+            
+            %-----------------------PROPAGATION/PREDICTION-----------------------------
+            
+            %            EKF.X_exp;
+            EKF.P_k_k = F_d*EKF.P_k_k*F_d' + Q_d;
+            %bibliography Maybeck cap 4.9
+            
+            timeaux= tac;
+            EKF.errorpropagationtime=EKF.errorpropagationtime + timeaux; 
+
+        end
+               
+        %% UPDATE
+        function EKF = Update(EKF, x, y, u, v, delta_t)
+%             tic
+            % --------------------- Expected State Values -----------------------------
+            p_w_i_hat       = EKF.X_exp(1:3);
+            v_w_i_hat       = EKF.X_exp(4:6);
+            q_w_i_hat       = EKF.X_exp(7:10);  % Expectation fof the quaternion from world to IMU
+            % q_w_i_hat = quatmult(ODO_IMUrot,X(7:10));
+            % q_w_i_hat = quat_normalize(q_w_i_hat);
+            b_omega_hat     = EKF.X_exp(11:13); % Expectation of the bias of the IMU gyro measurements
+            b_a_hat         = EKF.X_exp(14:16); % Expectation of the bias of the IMU accelerometer measurements
+            L_hat           = EKF.X_exp(17);
+            p_i_c_hat       = EKF.X_exp(18:20);
+            q_i_c_hat       = EKF.X_exp(21:24);
+            % FIXME: b_a_hat, b_omega_hat, p_i_c_hat and q_i_c_hat are not being changed in the
+            % expectancy, with respect to the state K
+            
+            % Cross product matrices from the unbiased measurements
+            %            Cross_a_x = VectorToCrossMat(acc(2,:) - b_a_hat);
+            
+            
+            Rotation = quatmult(EKF.X_exp(7:10),invquat(EKF.X(7:10)));
+            omega_mean  = 2* Rotation(1:3)/delta_t;
+            Rotation = QuatToRotMat(Rotation);
+            Cross_omega_x = VectorToCrossMat(omega_mean - b_omega_hat);
+            %            Cross_omega_x2 = Cross_omega_x*Cross_omega_x;
+            
+            %Make rotation matrix from the quaternion
+            C_q_w_i_hat = QuatToRotMat(q_w_i_hat);
+            C_q_i_c_hat = QuatToRotMat(q_i_c_hat);
+            
+            % Make cross product matrices from v_w_i_hat and p_i_c_hat
+            Cross_v_w_i_hat = VectorToCrossMat(v_w_i_hat);
+            Cross_p_i_c_hat = VectorToCrossMat(p_i_c_hat);
+            
+            %% =====================OPTICAL FLOW===================================
+            tic
+            ama=EKF.pixel_size; % FIXME : get rid of this constant
+            
+            % Set the pixel position referenced to the center
+            x = x'-EKF.Image_width /2+0.5;
+            y = y'-EKF.Image_height/2+0.5;
+            x = x *(ama/EKF.f); y = -y *(ama/EKF.f);
+            z = ones(size(x));
+            
+            u = u'*(ama/EKF.f);
+            v = -v'*(ama/EKF.f);
+            
+            %FIXME now they are just being divided by f, but not multiplied by
+            %pixelsize
+            
+            
+            %%In case of no flow detected
+            if length(u) < 5
+                %                if     noflow_counter > MAX_NOFLOW
+                %                    error('Optical Flow information too poor. Need more features.\n');
+                %                    return
+                %                end
+                warning('No flow detected in this image frame.\n');
+                %                noflow_counter  = noflow_counter+1;
+                %                %keep constant movement
+                %                POSE_OF(i,:) = [ POSE_OF(i-1,1:3)+ODO_OpticalFlowpos quatmult(ODO_OpticalFlowrot,POSE_OF(i-1,4:7))];
+                %                if length(u) < 2
+                %                    POSE_IMUOF = [ POSE_IMUOF(i-1,1:3)+ODO_OpticalFlowpos quatmult(ODO_OpticalFlowrot,POSE_IMUOF(i-1,4:7))];
+                %                end
+                return
+            end
+            timeaux= toc;
+
+            %% ---------------------OUTLIERS REJECTION---------------------
+            tic
+            % ----------------------Homography RANSAC----------------------
+            % First method: Calculating the Homogrpahy Matrix from a random subset
+            % of sample_num points of all the matched features in the optical flow.
+            % After max_Iter iterations, return the inliers of the most accepted
+            % model (The model which can include the most inliers).
+            
+            % inliers_idx = RANSAC_Homography(x,y,u,v,max_Iter,sample_num,RANSAC_Homography_treshold);
+            %----------------------Linear RANSAC---------------------------
+            % Second method: Matching the Consensus of the random samples in a
+            % linear model
+            % tic
+            
+            % inliers_idx = RANSAC_Linear(u,v,EKF.max_Iter,EKF.sample_num,EKF.RANSAC_Linear_treshold);
+            
+            %--------------------- Least Medaian of Squares Rejection------
+            
+            
+            
+            %---------------------Histogram Analysis-----------------------
+            inliers_idx = HistographicRejection(u,v);
+            
+            %--------------------------------------------------------------
+            
+            if length(inliers_idx) < 5
+                warning('Inliers information too poor (%d). Avoiding outlier rejection.\n',length(inliers_idx));
+                EKF.X = EKF.X_exp;
+                return
+                w = zeros(size(u));
+            else
+                %                full_x=x;
+                %                full_y=y;
+                %                full_u=u;
+                %                full_v=v;
+                x = x(inliers_idx);
+                y = y(inliers_idx);
+                z = z(inliers_idx);
+                u = u(inliers_idx);
+                v = v(inliers_idx);
+                w = zeros(size(u));
+                
+                %                max_inliers(jj) = length(inliers_idx);
+            end
+            
+            timeaux= toc;
+            EKF.outlierstime=EKF.outlierstime+timeaux;
+            
+            %% ------------ CAMERA DEROTATION ----------------------------
+            tic;
+            % Unrotate Optical Flow for use in 2DoF Epipolar Algorithm
+            % The rotation velocity of the IMU has been integrated over time. The
+            % result of it is the rotation quaternion. As the Optical Flow here is
+            % a distance vector rather than a velocity vector, we use the
+            % integrated rotation of the IMU to unrotate the Optical Flow
+            % Assuming smallangle:
+            %             tic
+            
+            unrotation_OF = (eye(3)-Rotation) * [x y z]';
+            
+            %UNROTATE
+            u = u + unrotation_OF(1,:)';
+            v = v + unrotation_OF(2,:)';
+            w = w + unrotation_OF(3,:)';
+            
+            %% --------------and EPIPOLAR RECONSTRUCTION ------------------
+            
+            %Calculate using the Epipolar Constraint over the Optical Flow
+            
+            %------------------ planar Optical Flow (w=0)------------------
+%             aux = Continuous8point1DoF(x,y,z,u,v,w)/delta_t;
+            
+            %This option demonstrated to be the best: 
+            
+            aux = Continuous8point2DoF(x,y,z,u,v,w);
+            %----------------FIR Filter------------------------------------
+            
+            NLdistort = 2*1/L_hat;
+            
+            aux = EKF.FIR_buff(:,1) ...
+                + sign(((aux - EKF.FIR_buff(:,1))/2)).*(1 -exp(NLdistort*-abs(-aux + EKF.FIR_buff(:,1))))/NLdistort;
+            
+            EKF.FIR_buff = [aux EKF.FIR_buff(:,1:4)];
+            aux = (EKF.FIR_buff * EKF.FIR_coeff');
+            
+%             if norm(aux - EKF.z_OF) > 2
+%                 EKF.z_OF = mean([EKF.z_OF aux/delta_t],2);
+%             else
+            EKF.z_OF = aux/delta_t;
+%             end
+            timeaux= toc;
+
+            EKF.opticalflowsimtime = EKF.opticalflowsimtime+timeaux;
+            
+%             fprintf(' OFvel:  %d, %d', EKF.z_OF)
+            
+%             toc3 = toc;
+            %%-------------------------UPDATE/MEASUREMENT------------------
+            tic;
+            % It is important to notice that we just get measurements in the velocity.
+            % Then, we only write the H matrix for velocity measurements
+            
+            EKF.H = ConstructHv(L_hat,C_q_i_c_hat,C_q_w_i_hat,Cross_v_w_i_hat,Cross_omega_x,Cross_p_i_c_hat,p_i_c_hat,v_w_i_hat);
+            
+            %It is important noting that the resulting value from the projected
+            %error state vector is an expecter measurement error. This means we
+            %cannot take the difference ffrom this to the actual measurement, but
+            %to the difference between the actual measurement and the expected
+            %measurement value.
+            
+            z_exp = L_hat *C_q_i_c_hat*(C_q_w_i_hat*v_w_i_hat' + Cross_omega_x*p_i_c_hat');
+            
+            %     z_exp =0;
+            %Compute the expected mean measurement.
+            
+            
+            % Compute the residual in velocity
+            
+            r = EKF.z_OF - z_exp;
+%             r(3)=0;
+            %         r =zeros(3,1);
+            
+            % Covariance Matrix of the Optical Flow measurements
+            % R: defined in initialization of Kalman Filter
+            
+            %Compute the innovation
+            S = EKF.H * EKF.P_k_k * EKF.H' + EKF.R;
+            
+            % Compute Kalman Gain
+            K  = EKF.P_k_k * EKF.H'/S;
+            
+            % Compute correction
+            X_err = K*r;
+            
+                        
+            % Update Covariance Matrix
+            EKF.P_k_k =  (eye(22) - K*EKF.H) * EKF.P_k_k * (eye(22) - K*EKF.H)' + K*EKF.R*K';
+            
+%             EKF.P_k_k =  (eye(22) - K(:,1:2)*EKF.H(1:2,:)) * EKF.P_k_k * (eye(22) - K(:,1:2)*EKF.H(1:2,:))' + K(:,1:2)*EKF.R(1:2,1:2)*K(:,1:2)';
+            % Update Error State Vector
+            X_err = X_err'; % again, the state is expressed horizontal
+            
+            
+            % Update State Vector
+            EKF.X(1:6) = EKF.X_exp(1:6) + X_err(1:6);
+            EKF.X(7:10) = quatmult(quat_normalize([0.5*X_err(7:9) 1]), EKF.X_exp(7:10));
+%             EKF.X(7:10) = EKF.X_exp(7:10);
+            
+            EKF.X(11:20) = EKF.X_exp(11:20) + X_err(10:19);
+            EKF.X(21:24) = quatmult(quat_normalize([0.5*X_err(20:22) 1]), EKF.X_exp(21:24));
+            
+            if EKF.X(17)<0
+                EKF.X(17) = 1e-4;
+                fprintf('Scale factor cannot be negative replacing for %d \n',EKF.X(17));
+            end
+            timeaux = toc;
+            
+            
+            
+            % fprintf('Time Consumption');
+            % fprintf('pre-fetching:  %g \t Ransac: %g \t Epipolar: %g \t Kalman Matrices: %g \n',toc1,toc2,toc3,toc4);
+            
+            %% Draw 3D point cloud
+            %             hPlot = figure('Name', 'Particle Filter Point Cloud')
+            
+%             h1 = scatter3(EKF.X(:,4),EKF.X(:,5),EKF.X(:,6),2,'b');
+%             hold on;
+%             h2 = scatter3(EKF.z_OF(1),EKF.z_OF(2),EKF.z_OF(3),5,'r');
+%             h3 = scatter3(EKF.z_SOF(1),EKF.z_SOF(2),EKF.z_SOF(3),5,'*k');
+%             hold off;
+%             legend([h1 h2 h3],'Prediction','OF_meas','SOF_meas');
+%             xlabel('x (m/s)');ylabel('y (m/s)');zlabel('z (m/s)');
+            
+            %
+            % hold on;
+            % for a = 10.^(1:4) % 'a' defines the isosurface limits
+            %    p = patch(isosurface(X,Y,Z,V,max(max(max(V)))/a)); % isosurfaces at max(V)/a
+            %    isonormals(X,Y,Z,V,p); % plot the surfaces
+            %    set(p,'FaceColor','red','EdgeColor','none'); % set colors
+            % end
+            % alpha(.1); % set the transparency for the isosurfaces
+            % daspect([1 1 1]); box on; axis tight;
+            
+            
+            
+        end
+        %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        
+    end
+    
+    %    methods
+    %       function obj = set.Material(obj,material)
+    %          if ~(strcmpi(material,'aluminum') ||...
+    %                strcmpi(material,'stainless steel') ||...
+    %                strcmpi(material,'carbon steel'))
+    %             error('Material must be aluminum, stainless steel, or carbon steel')
+    %          end
+    %          obj.Material = material;
+    %       end % Material set function
+    
+    %       function modulus = get.Modulus(obj)
+    %          ind = find(obj.Strain > 0); % Find nonzero strain
+    %          modulus = mean(obj.Stress(ind)./obj.Strain(ind));
+    %       end % Modulus get function
+    
+    %       function obj = set.Modulus(obj,~)
+    %          fprintf('%s%d\n','Modulus is: ',obj.Modulus)
+    %          error('You cannot set Modulus explicitly');
+    %       end
+    
+    %       function disp(td)
+    %          fprintf(1,'Material: %s\nSample Number: %g\nModulus: %1.5g\n',...
+    %             td.Material,td.SampleNumber,td.Modulus);
+    %       end % disp
+    
+    %       function plot(td,varargin)
+    %          plot(td.Strain,td.Stress,varargin{:})
+    %          title(['Stress/Strain plot for Sample ',num2str(td.SampleNumber)])
+    %          xlabel('Strain %')
+    %          ylabel('Stress (psi)')
+    %       end % plot
+    %    end
+    
+    %    methods (Access = 'private') % Access by class members only
+    %       function m = CalcModulus(td)
+    %          % Over-simplified calculation of Elastic Modulus
+    %          ind = find(td.Strain > 0); % Find nonzero strain
+    %          m = mean(td.Stress(ind)./td.Strain(ind));
+    %       end % CalcModulus
+    %    end
+end % classdef
+

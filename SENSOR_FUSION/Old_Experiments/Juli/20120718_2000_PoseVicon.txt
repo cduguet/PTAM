@@ -1,0 +1,1 @@
+rostime,x,y,z,rot_x,rot_y,rot_z,rot_w
